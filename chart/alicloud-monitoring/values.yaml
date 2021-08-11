@@ -1,0 +1,52 @@
+namespace: infra
+
+annotations:
+  ram.aliyuncs.com/role: spotprice
+
+imagePullSecrets:
+- name: mysecret
+
+image:
+  name: allanhung/alicloud_monitoring
+  tag: 1.0.0
+
+imagePullPolicy: Always
+
+cmds:
+- /usr/bin/alicloud-monitoring 
+
+args:
+- spotprice  
+- --cron
+- "0 */5 * * * *"
+
+ports:
+- containerPort: 9085
+  name: metrics
+  protocol: TCP
+
+replicas: 1
+  
+podMonitor:
+  labels:
+    release: po
+  interval: 300s
+
+prometheusRule:
+  labels:
+    app: kube-prometheus-stack
+    release: po
+  groups:
+  - name: spotprice_check.rules
+    rules:
+    - expr: avg_over_time(sum by (type, zoneid) (ecsspotprice)[1h:5m])
+      record: type_zone:spotprice:sum_avg
+    - expr: avg_over_time(sum by (type, zoneid) (ecslistprice)[1h:5m])
+      record: type_zone:listprice:sum_avg
+    - alert: Spot instance price discount lower than 45%
+      annotations:
+        description: 'Spot instance price discount lower than 45% ({{ .Value | printf "%.2f" }}%) - {{ $labels.type }} ({{ $labels.zoneid }}).'
+        summary: Spot instance price discount {{ .Value | printf "%.2f" }}%.
+      expr: (1 - type_zone:spotprice:sum_avg/type_zone:listprice:sum_avg)*100 < 45
+      labels:
+          severity: warning

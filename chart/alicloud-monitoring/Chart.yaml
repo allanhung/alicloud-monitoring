@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: 1.0.15
+description: alicloud-monitoring Helm chart for Kubernetes
+name: alicloud-monitoring
+version: 1.0.15
