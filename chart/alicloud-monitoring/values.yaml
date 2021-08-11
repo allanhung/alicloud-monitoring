@@ -8,7 +8,7 @@ imagePullSecrets:
 
 image:
   name: allanhung/alicloud_monitoring
-  tag: 1.0.0
+  tag: 1.0.15
 
 imagePullPolicy: Always
 
